@@ -24,6 +24,7 @@ input{width:74px}input[type=date]{width:auto}textarea{width:100%;box-sizing:bord
 <header><h1>🏃 VO2max + weight-loss plan</h1><p id="top"></p><div class="bar"><i id="bar"></i></div></header>
 <main>
 <div class="card"><div class="row"><input type="date" id="dt"><span class="chip" id="chip"></span></div><div id="ses"></div></div>
+<div class="row" style="justify-content:space-between;margin:14px 0 0"><button id="pw">‹ Prev week</button><button id="tw">Today</button><button id="nw">Next week ›</button></div>
 <div class="card wk" id="wk"></div>
 <div class="card"><b>Weight</b><div class="row" style="margin-top:8px"><input id="kg" type="number" step="0.1" placeholder="kg"><button id="wsave" class="pri">Save for this date</button><span class="mut" id="wavg"></span></div></div>
 <div class="card"><b>Your data</b><p class="mut" style="margin:4px 0 8px">Everything is stored on this device only. Back it up now and then.</p>
@@ -58,6 +59,8 @@ function draw(){
 }
 function save(s,st){const g=i=>$(i).value;log[s.k]={s:st,m:g("m"),k:g("k"),h:g("h"),p:g("p"),r:g("r"),n:g("n"),d:s.d};store();draw()}
 function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
+function shift(n){const d=new Date(sel+"T00:00");d.setDate(d.getDate()+n);const x=iso(d);if(x<P[0].d||x>P[P.length-1].d)return;sel=x;draw()}
+$("pw").onclick=()=>shift(-7);$("nw").onclick=()=>shift(7);$("tw").onclick=()=>{sel=iso(new Date());draw()};
 $("dt").onchange=e=>{if(e.target.value){sel=e.target.value;draw()}};
 $("wsave").onclick=()=>{const v=parseFloat($("kg").value);if(v>30&&v<300){wt[sel]={kg:v};store();draw()}};
 $("csv").onclick=()=>{const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"',o=["type,week,day,date,session,status,min,km,avg_hr,watts,rpe,notes"];
