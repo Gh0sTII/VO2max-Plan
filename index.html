@@ -1,0 +1,71 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>VO2max plan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f7a4d"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><link rel="icon" href="icon-192.png">
+<style>
+:root{--bg:#eef6f0;--fg:#14281d;--card:#fff;--mut:#5b7266;--ac:#1f7a4d;--ac2:#2fa36b;--ln:#d3e6da;--ok:#cdeed8;--pa:#fdecb3;--sk:#fbd0d0;--sh:0 2px 10px rgba(20,90,56,.10);color-scheme:light;box-sizing:border-box}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1a14;--fg:#e6f2ea;--card:#16251d;--mut:#92b0a0;--ac:#3fb678;--ac2:#5fd394;--ln:#28402f;--ok:#1d5a38;--pa:#5a4a14;--sk:#5e2b2b;--sh:none;color-scheme:dark}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+header{background:linear-gradient(135deg,#145a38,#2fa36b);color:#fff;padding:calc(18px + env(safe-area-inset-top,0px)) 18px 22px;border-radius:0 0 22px 22px;box-shadow:var(--sh)}
+header h1{margin:0;font-size:20px;letter-spacing:.2px}header p{margin:2px 0 12px;opacity:.9;font-size:13px}
+.bar{height:10px;background:rgba(255,255,255,.28);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:#fff;border-radius:6px;transition:width .4s}
+main{max-width:560px;margin:auto;padding:0 12px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:16px;padding:14px;margin:12px 0;box-shadow:var(--sh)}
+.card h3{margin:10px 0 2px;color:var(--ac);font-size:18px}.mut{color:var(--mut);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,input,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:9px 11px}
+button{cursor:pointer;font-weight:600}button.on.Done{background:var(--ac);color:#fff;border-color:var(--ac)}button.on.Partial{background:var(--pa)}button.on.Skipped{background:var(--sk)}
+.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+input{width:74px}input[type=date]{width:auto}textarea{width:100%;box-sizing:border-box}
+.chip{display:inline-block;padding:2px 9px;border-radius:99px;background:var(--ok);color:var(--ac);font-size:12px;font-weight:700}
+.wk div{display:flex;justify-content:space-between;gap:8px;padding:9px 10px;border-radius:10px;cursor:pointer;margin:2px 0}
+.wk .sel{outline:2px solid var(--ac2)}.wk .Done{background:var(--ok)}.wk .Partial{background:var(--pa)}.wk .Skipped{background:var(--sk)}
+</style></head><body>
+<header><h1>🏃 VO2max + weight-loss plan</h1><p id="top"></p><div class="bar"><i id="bar"></i></div></header>
+<main>
+<div class="card"><div class="row"><input type="date" id="dt"><span class="chip" id="chip"></span></div><div id="ses"></div></div>
+<div class="card wk" id="wk"></div>
+<div class="card"><b>Weight</b><div class="row" style="margin-top:8px"><input id="kg" type="number" step="0.1" placeholder="kg"><button id="wsave" class="pri">Save for this date</button><span class="mut" id="wavg"></span></div></div>
+<div class="card"><b>Your data</b><p class="mut" style="margin:4px 0 8px">Everything is stored on this device only. Back it up now and then.</p>
+<div class="row"><button id="csv">Download CSV</button><button id="bak">Backup</button><button id="rst">Restore</button><input type="file" id="file" accept=".json" hidden></div></div>
+</main>
+<script>
+const N=["Strength – lower body", "Bike VO2 intervals (indoor)", "Easy run + strides", "Strength – upper body", "Optional easy run (or rest)", "Run intervals – 1 min reps", "Long easy ride", "Run intervals – 3 min reps", "Shuttle session (beep-test practice)", "Run intervals – 30/30s", "FTP retest (Zwift)", "Rest", "Beep test (20 m shuttle)", "Easy spin + final check-in"],R=[[1,0,0,"R","",55],[1,1,1,"R","4 x 3 min at 200–227 W, 3 min rest",41],[1,2,2,"R","Easy run, 20 min at 6:45–7:15 /km, conversational (full sentences)",25],[1,3,3,"R","",50],[1,4,4,"O","Optional: 20 min easy run at 6:45–7:15 /km",20],[1,5,5,"R","5 x 1 min hard at 5:15–5:30 /km (RPE 8–9), 90 sec easy jog between",32],[1,6,6,"R","60 min steady ride at 106–142 W (Zone 2)",60],[2,0,0,"R","",55],[2,1,1,"R","4 x 3 min at 200–227 W, 2 min 30 sec rest",40],[2,2,2,"R","Easy run, 25 min at 6:45–7:15 /km, conversational (full sentences)",30],[2,3,3,"R","",50],[2,4,4,"O","Optional: 20 min easy run at 6:45–7:15 /km",20],[2,5,5,"R","6 x 1 min hard at 5:15–5:30 /km (RPE 8–9), 90 sec easy jog between",35],[2,6,6,"R","65 min steady ride at 106–142 W (Zone 2)",65],[3,0,0,"R","",55],[3,1,1,"R","4 x 4 min at 200–227 W, 3 min rest",45],[3,2,2,"R","Easy run, 30 min at 6:45–7:15 /km, conversational (full sentences)",35],[3,3,3,"R","",50],[3,4,4,"O","Optional: 25 min easy run at 6:45–7:15 /km",25],[3,5,5,"R","6 x 1 min hard at 5:15–5:30 /km (RPE 8–9), 75 sec easy jog between",34],[3,6,6,"R","75 min steady ride at 106–142 W (Zone 2)",75],[4,0,0,"R","",40],[4,1,1,"R","3 x 4 min at 200–227 W, 3 min rest",38],[4,2,2,"R","Easy run, 22 min at 6:45–7:15 /km, conversational (full sentences)",27],[4,3,3,"R","",40],[4,4,4,"O","Optional: 20 min easy run at 6:45–7:15 /km",20],[4,5,5,"R","4 x 1 min hard at 5:15–5:30 /km (RPE 8–9), 90 sec easy jog between",30],[4,6,6,"R","60 min steady ride at 106–142 W (Zone 2)",60],[5,0,0,"R","",55],[5,1,1,"R","5 x 4 min at 200–227 W, 4 min rest",56],[5,2,2,"R","Easy run, 30 min at 6:45–7:15 /km, conversational (full sentences)",35],[5,3,3,"R","",50],[5,4,4,"O","Optional: 25 min easy run at 6:45–7:15 /km",25],[5,5,7,"R","4 x 3 min hard at 5:15–5:30 /km (RPE 8–9), 2 min easy jog between",40],[5,6,6,"R","75 min steady ride at 106–142 W (Zone 2)",75],[6,0,0,"R","",55],[6,1,1,"R","5 x 4 min at 200–227 W, 4 min rest",56],[6,2,2,"R","Easy run, 35 min at 6:45–7:15 /km, conversational (full sentences)",40],[6,3,3,"R","",50],[6,4,4,"O","Optional: 30 min easy run at 6:45–7:15 /km",30],[6,5,7,"R","5 x 3 min hard at 5:15–5:30 /km (RPE 8–9), 2 min easy jog between",45],[6,6,6,"R","80 min steady ride at 106–142 W (Zone 2)",80],[7,0,0,"R","",55],[7,1,1,"R","5 x 4 min at 200–227 W, 3 min 30 sec rest",54],[7,2,2,"R","Easy run, 40 min at 6:45–7:15 /km, conversational (full sentences)",45],[7,3,3,"R","",50],[7,4,4,"O","Optional: 30 min easy run at 6:45–7:15 /km",30],[7,5,7,"R","5 x 3 min hard at 5:15–5:30 /km (RPE 8–9), 2 min easy jog between",45],[7,6,6,"R","90 min steady ride at 106–142 W (Zone 2)",90],[8,0,0,"R","",40],[8,1,1,"R","4 x 4 min at 200–227 W, 4 min rest",48],[8,2,2,"R","Easy run, 30 min at 6:45–7:15 /km, conversational (full sentences)",35],[8,3,3,"R","",40],[8,4,4,"O","Optional: 25 min easy run at 6:45–7:15 /km",25],[8,5,7,"R","3 x 3 min hard at 5:15–5:30 /km (RPE 8–9), 2 min easy jog between",35],[8,6,6,"R","70 min steady ride at 106–142 W (Zone 2)",70],[9,0,0,"R","",55],[9,1,1,"R","6 x 3 min at 200–227 W, 3 min rest",53],[9,2,2,"R","Easy run, 35 min at 6:45–7:15 /km, conversational (full sentences)",40],[9,3,3,"R","",50],[9,4,8,"R","3 blocks of 3 min of 20 m shuttles paced to levels 5–6",28],[9,5,9,"R","2 sets of 7 x (30 sec on at 5:00–5:15 /km, 30 sec easy jog), with 3 min easy j",37],[9,6,6,"R","90 min steady ride at 106–142 W (Zone 2)",90],[10,0,0,"R","",55],[10,1,1,"R","4 x 5 min at 200–227 W, 4 min rest",52],[10,2,2,"R","Easy run, 40 min at 6:45–7:15 /km, conversational (full sentences)",45],[10,3,3,"R","",50],[10,4,8,"R","3 blocks of 3 min of 20 m shuttles paced to levels 6–7",28],[10,5,9,"R","2 sets of 8 x (30 sec on at 5:00–5:15 /km, 30 sec easy jog), with 3 min easy j",39],[10,6,6,"R","90 min steady ride at 106–142 W (Zone 2)",90],[11,0,0,"R","",55],[11,1,1,"R","6 x 3 min at 200–227 W, 2 min 30 sec rest",50],[11,2,2,"R","Easy run, 40 min at 6:45–7:15 /km, conversational (full sentences)",45],[11,3,3,"R","",50],[11,4,8,"R","3 blocks of 3 min of 20 m shuttles paced to levels 7–8",28],[11,5,9,"R","2 sets of 8 x (30 sec on at 5:00–5:15 /km, 30 sec easy jog), with 3 min easy j",39],[11,6,6,"R","90 min steady ride at 106–142 W (Zone 2)",90],[12,0,0,"R","",40],[12,1,10,"R","Zwift FTP test, same protocol as 11 Nov",45],[12,2,2,"R","Easy run, 25 min at 6:45–7:15 /km, conversational (full sentences)",30],[12,3,3,"R","",40],[12,4,11,"R","Full rest before the beep test",0],[12,5,12,"R","Warm-up 15 min (easy jog, 4 strides, 2 practice shuttles)",45],[12,6,13,"R","45 min easy spin (power Zones 1–2)",45]];
+
+const S=new Date(2026,10,16),DN=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],$=i=>document.getElementById(i);
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const P=R.map(r=>{const d=new Date(S);d.setDate(d.getDate()+(r[0]-1)*7+r[1]);return{w:r[0],i:r[1],n:N[r[2]],q:r[3],t:r[4],m:r[5],d:iso(d),k:"w"+r[0]+DN[r[1]]}});
+let sel=iso(new Date()),log={},wt={};
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function load(){try{log=JSON.parse(localStorage.getItem("vlog")||"{}");wt=JSON.parse(localStorage.getItem("vwt")||"{}")}catch(e){}}
+function store(){try{localStorage.setItem("vlog",JSON.stringify(log));localStorage.setItem("vwt",JSON.stringify(wt))}catch(e){}}
+function avg(d){const e=new Date(d+"T00:00"),v=[];for(let i=0;i<7;i++){const x=new Date(e);x.setDate(e.getDate()-i);const w=wt[iso(x)];if(w&&w.kg)v.push(w.kg)}return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null}
+function draw(){
+ const s=P.find(x=>x.d===sel),req=P.filter(x=>x.q==="R"),done=req.filter(x=>(log[x.k]||{}).s==="Done").length;
+ $("dt").value=sel;$("bar").style.width=(100*done/req.length)+"%";
+ const wkn=s?s.w:Math.min(12,Math.max(1,Math.floor((new Date(sel+"T00:00")-S)/6048e5)+1));
+ $("top").textContent="Week "+wkn+" of 12 · "+done+" of "+req.length+" required sessions done";
+ $("chip").textContent=s?"Week "+s.w+" · "+DN[s.i]:"Outside plan";
+ const L=s?log[s.k]||{}:{};
+ $("ses").innerHTML=s?`<h3>${esc(s.n)}</h3><div class="mut">${s.q==="R"?"Required":s.q==="O"?"Optional":"Rest"}${s.m?" · "+s.m+" min":""}</div><p>${esc(s.t)||"Strength: see your plan sheet for the exercises."}</p>
+ <div class="row">${["Done","Partial","Skipped"].map(t=>`<button data-s="${t}" class="${L.s===t?"on "+t:""}">${t}</button>`).join("")}</div>
+ <div class="row" style="margin-top:8px"><input id="m" type="number" placeholder="min" value="${esc(L.m)}"><input id="k" type="number" step="0.1" placeholder="km" value="${esc(L.k)}"><input id="h" type="number" placeholder="HR" value="${esc(L.h)}"><input id="p" type="number" placeholder="watts" value="${esc(L.p)}"><input id="r" type="number" min="1" max="10" placeholder="RPE" value="${esc(L.r)}"></div>
+ <textarea id="n" rows="2" placeholder="Notes" style="margin-top:8px">${esc(L.n)}</textarea><div class="row" style="margin-top:8px"><button class="pri" id="save">Save</button></div>`:`<p>No session on this date.</p>`;
+ if(s){document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>save(s,b.dataset.s));$("save").onclick=()=>save(s,L.s||"Done")}
+ $("wk").innerHTML=P.filter(x=>x.w===wkn).map(x=>`<div data-d="${x.d}" class="${(log[x.k]||{}).s||""} ${x.d===sel?"sel":""}"><span>${DN[x.i]} · ${esc(x.n)}${x.q==="O"?" (optional)":""}</span><span>${(log[x.k]||{}).s||""}</span></div>`).join("");
+ $("wk").querySelectorAll("[data-d]").forEach(e=>e.onclick=()=>{sel=e.dataset.d;draw()});
+ const W=wt[sel];$("kg").value=W?W.kg:"";const a=avg(sel);$("wavg").textContent=a?"7-day avg "+a+" kg":"";
+}
+function save(s,st){const g=i=>$(i).value;log[s.k]={s:st,m:g("m"),k:g("k"),h:g("h"),p:g("p"),r:g("r"),n:g("n"),d:s.d};store();draw()}
+function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
+$("dt").onchange=e=>{if(e.target.value){sel=e.target.value;draw()}};
+$("wsave").onclick=()=>{const v=parseFloat($("kg").value);if(v>30&&v<300){wt[sel]={kg:v};store();draw()}};
+$("csv").onclick=()=>{const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"',o=["type,week,day,date,session,status,min,km,avg_hr,watts,rpe,notes"];
+ P.forEach(x=>{const l=log[x.k];if(l)o.push(["session",x.w,DN[x.i],x.d,x.n,l.s,l.m,l.k,l.h,l.p,l.r,l.n].map(q).join(","))});
+ Object.keys(wt).sort().forEach(d=>o.push("weight,,,"+d+",,,,,,,,"+wt[d].kg));dl("vo2max-log.csv",o.join("\n"),"text/csv")};
+$("bak").onclick=()=>dl("vo2max-backup.json",JSON.stringify({log,wt}),"application/json");
+$("rst").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const o=JSON.parse(t);Object.assign(log,o.log||{});Object.assign(wt,o.wt||{});store();draw()}catch(x){alert("That file isn’t a valid backup.")}})};
+load();draw();
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script></body></html>
